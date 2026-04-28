@@ -242,8 +242,9 @@ export default function ChatPanel({
       onMessageSent();
 
       // Automatically continue if the response was cut off (unclosed code block)
-      const backticksCount = (fullText.match(/```/g) || []).length;
-      if (backticksCount % 2 !== 0) {
+      const backticksCount = fullText ? (fullText.match(/```/g) || []).length : 0;
+      const lacksTerminalChar = fullText && fullText.trim().length > 0 && !/[.!?}\]>"'`*_~]$/.test(fullText.trim());
+      if (backticksCount % 2 !== 0 || lacksTerminalChar) {
         setTimeout(() => {
           sendMessage('continue', targetRole);
         }, 1000);
