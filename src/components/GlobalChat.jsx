@@ -9,7 +9,7 @@ CRITICAL RULE: Always reply in the exact same language the user uses.
 If they speak in Indonesian, reply in natural, fluent Indonesian.
 Provide concise responses unless specifically asked for detail.`;
 
-export default function GlobalChat({ apiKey, onNeedApiKey, activeGlobalChatId, onRefreshChats }) {
+export default function GlobalChat({ onNeedApiKey, activeGlobalChatId, onRefreshChats }) {
   const [messages, setMessages] = useState([]);
   const [inputMsg, setInputMsg] = useState('');
   const [selectedModel, setSelectedModel] = useState(MODELS[0].id);
@@ -41,24 +41,20 @@ export default function GlobalChat({ apiKey, onNeedApiKey, activeGlobalChatId, o
     }
   }, [messages, streamingText]);
 
-  const saveMessages = (newMessages) => {
+  const saveMessages = (newMessages, customName) => {
     setMessages(newMessages);
-    updateGlobalChat(activeGlobalChatId, newMessages);
-    // Optionally update name based on first user message
-    if (newMessages.length === 1 && newMessages[0].role === 'user') {
-      const name = newMessages[0].content.slice(0, 30) + (newMessages[0].content.length > 30 ? '...' : '');
-      updateGlobalChat(activeGlobalChatId, null, name);
-      onRefreshChats();
-    } else {
-      updateGlobalChat(activeGlobalChatId, newMessages, null);
+    // Determine name from first user message
+    let chatName = customName || null;
+    if (!chatName && newMessages.length === 1 && newMessages[0].role === 'user') {
+      const txt = newMessages[0].content;
+      chatName = txt.slice(0, 40) + (txt.length > 40 ? '...' : '');
     }
+    // Single call to update both messages and optional name atomically
+    updateGlobalChat(activeGlobalChatId, newMessages, chatName);
+    if (chatName) onRefreshChats();
   };
 
   const handleSend = async () => {
-    if (!apiKey) {
-      onNeedApiKey();
-      return;
-    }
     if (!inputMsg.trim()) return;
 
     const userText = inputMsg;
@@ -116,16 +112,16 @@ export default function GlobalChat({ apiKey, onNeedApiKey, activeGlobalChatId, o
   };
 
   return (
-    <div className="global-chat-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '20px', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
-      <div className="global-chat-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', padding: '10px 20px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text-primary)' }}>🌍 Global AI Chat</h2>
-          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Freeform conversational AI</span>
+    <div className="global-chat-container">
+      <div className="global-chat-header">
+        <div className="global-chat-header-info">
+          <h2 className="global-chat-title">🌍 Global AI Chat</h2>
+          <span className="global-chat-subtitle">Freeform conversational AI</span>
         </div>
         <select 
           value={selectedModel} 
           onChange={e => setSelectedModel(e.target.value)}
-          style={{ background: 'var(--bg-deep)', color: 'var(--text-primary)', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', outline: 'none', maxWidth: '300px' }}
+          className="global-model-select"
         >
           {Array.from(new Set(MODELS.map(m => m.category))).map(cat => (
             <optgroup key={cat} label={cat}>
@@ -137,7 +133,7 @@ export default function GlobalChat({ apiKey, onNeedApiKey, activeGlobalChatId, o
         </select>
       </div>
 
-      <div className="chat-messages" ref={scrollRef} style={{ flex: 1, overflowY: 'auto', paddingRight: '10px', display: 'flex', flexDirection: 'column' }}>
+      <div className="chat-messages global-chat-messages" ref={scrollRef}>
         {messages.length === 0 && !streamingText && (
           <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-muted)' }}>
             <h3 style={{ marginBottom: 10 }}>How can I help you today?</h3>
@@ -190,8 +186,8 @@ export default function GlobalChat({ apiKey, onNeedApiKey, activeGlobalChatId, o
         )}
       </div>
 
-      <div className="prompt-area" style={{ marginTop: '20px', padding: '10px', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--border)' }}>
-        <div className="prompt-row" style={{ display: 'flex', gap: '10px' }}>
+      <div className="prompt-area global-chat-input">
+        <div className="prompt-row">
           <div className="prompt-input-wrap" style={{ flex: 1, position: 'relative' }}>
             <textarea
               className="prompt-textarea"

@@ -28,23 +28,22 @@ export default function SettingsModal({ onSave, onClose, onClearData }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()} style={{ overflowY: 'auto', padding: '20px 0' }}>
-      <div className="modal" style={{ maxWidth: 520, margin: 'auto' }}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal settings-modal">
         <div className="modal-title">⚙ Settings</div>
         <div className="modal-subtitle">Configure preferred models for each AI Role.</div>
 
         {/* Models per role */}
         <div className="settings-section">
           <div className="settings-section-title">AI Models Per Role</div>
-          <div className="role-model-row" style={{ alignItems: 'center' }}>
+          <div className="role-model-row">
             <div className="role-model-label" style={{ color: ROLES.concept.color }}>
               {ROLES.concept.icon} {ROLES.concept.short}
             </div>
             <select
               value={conceptModel}
               onChange={e => setConceptModel(e.target.value)}
-              className="settings-input"
-              style={{ width: '250px', padding: '6px 10px', fontSize: '13px' }}
+              className="settings-select"
             >
               {Array.from(new Set(MODELS.map(m => m.category))).map(cat => (
                 <optgroup key={cat} label={cat}>
@@ -55,15 +54,14 @@ export default function SettingsModal({ onSave, onClose, onClearData }) {
               ))}
             </select>
           </div>
-          <div className="role-model-row" style={{ alignItems: 'center' }}>
+          <div className="role-model-row">
             <div className="role-model-label" style={{ color: ROLES.builder.color }}>
               {ROLES.builder.icon} {ROLES.builder.short}
             </div>
             <select
               value={builderModel}
               onChange={e => setBuilderModel(e.target.value)}
-              className="settings-input"
-              style={{ width: '250px', padding: '6px 10px', fontSize: '13px' }}
+              className="settings-select"
             >
               {Array.from(new Set(MODELS.map(m => m.category))).map(cat => (
                 <optgroup key={cat} label={cat}>

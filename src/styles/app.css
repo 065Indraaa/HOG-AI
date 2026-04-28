@@ -2524,3 +2524,224 @@
   50% { opacity: 1; }
 }
 
+/* ════════════════════════════════════════════
+   GLOBAL CHAT LAYOUT
+   ════════════════════════════════════════════ */
+.global-chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.global-chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 18px;
+  background: var(--bg-secondary);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.global-chat-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.global-chat-title {
+  margin: 0;
+  font-size: 17px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.global-chat-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+}
+
+.global-model-select {
+  background: var(--bg-deep, var(--bg-primary));
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  min-width: 160px;
+  max-width: 260px;
+  flex-shrink: 1;
+  transition: border-color var(--transition);
+}
+
+.global-model-select:focus {
+  border-color: rgba(0,212,255,0.4);
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.06);
+}
+
+.global-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 4px 8px;
+  min-height: 0;           /* CRITICAL: allows flex child to shrink & scroll */
+}
+
+.global-chat-input {
+  flex-shrink: 0;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  border-top: none;
+}
+
+/* ════════════════════════════════════════════
+   SETTINGS MODAL — improved layout
+   ════════════════════════════════════════════ */
+.settings-modal {
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  margin: auto;
+}
+
+/* Settings select (model dropdown) */
+.settings-select {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' viewBox='0 0 10 6'%3E%3Cpath stroke='%23888' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+.settings-select:focus {
+  border-color: rgba(0,212,255,0.4);
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.06);
+}
+
+/* Role model row — flex wrap on small screens */
+.role-model-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+/* ════════════════════════════════════════════
+   SIDEBAR SCROLLABLE FIX
+   ════════════════════════════════════════════ */
+.sidebar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 24px 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  text-align: center;
+}
+.sidebar-empty-icon { font-size: 28px; opacity: 0.4; }
+
+/* project-delete-btn for global chats in sidebar */
+.project-delete-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all var(--transition);
+  opacity: 0;
+  flex-shrink: 0;
+}
+.project-card:hover .project-delete-btn {
+  opacity: 0.7;
+}
+.project-delete-btn:hover {
+  opacity: 1 !important;
+  background: var(--error);
+  color: #fff;
+}
+
+/* ════════════════════════════════════════════
+   MOBILE RESPONSIVE ADDITIONS
+   ════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .global-chat-container {
+    padding: 12px;
+  }
+
+  .global-chat-header {
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+
+  .global-chat-title { font-size: 14px; }
+  .global-model-select { max-width: 100%; min-width: 0; font-size: 11px; }
+
+  .global-chat-messages {
+    padding: 4px 0 8px;
+    gap: 12px;
+  }
+
+  .global-chat-input {
+    margin-top: 10px;
+    padding: 10px 12px;
+  }
+
+  /* Settings modal fullscreen on mobile */
+  .settings-modal {
+    max-height: 100vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-width: 100%;
+  }
+
+  .role-model-row { flex-direction: column; align-items: stretch; }
+  .role-model-label { width: auto; }
+  .settings-select { width: 100%; max-width: 100%; }
+}
+
+
