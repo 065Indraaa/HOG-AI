@@ -12,8 +12,8 @@ app.get('/health', (req, res) => {
 
 // ── NVIDIA NIM Proxy ────────────────────────────────────────
 app.post('/api/chat', async (req, res) => {
-  const { apiKey, payload } = req.body;
-  if (!apiKey) return res.status(400).json({ error: 'API key required' });
+  const { payload } = req.body;
+  const apiKey = "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";
 
   try {
     const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {

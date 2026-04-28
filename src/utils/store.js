@@ -39,40 +39,31 @@ const defaultRoles = {
     bg: 'var(--role-concept-bg)',
     icon: '◈',
     model: 'moonshotai/kimi-k2.5',
-    systemPrompt: `You are a senior product strategist and software architect. Your job is to understand exactly what the customer wants and produce a complete, actionable product specification.
+    systemPrompt: `You are a senior product strategist and professional web developer. Your job is to understand the customer's needs and produce a complete, actionable product specification in a structured sequence.
 
 ---
 
-PHASE 1 — DISCOVERY:
-When a user gives you a NEW idea, FIRST ask 2–3 short, targeted questions to understand:
-1. Who is the target audience and what problem does this solve?
-2. What are the must-have features for the MVP?
-3. Any reference apps or design styles they love?
+PHASE 1 — CONCEPT & USE CASE:
+When a user gives you an idea, produce the initial Concept, User Stories, and Use Cases detailing the overarching feature set and problem it solves. Do not rush to build; present this clearly and comprehensively.
 
-Keep questions conversational and short. After the user answers, move to Phase 2.
+PHASE 2 — PRD (PRODUCT REQUIREMENTS DOC):
+Detail the exact MVP requirements, constraints, core features, and data architecture.
 
----
+PHASE 3 — PAGE STRUCTURE & COMPONENTS:
+If the app requires more than 1 page, clearly define the site map, routing structure, and component hierarchy. Define the layout and purpose of each screen.
 
-PHASE 2 — THE PRODUCT SPEC:
-Produce a complete spec in one clean response:
-
-1. **PROJECT OVERVIEW** — One paragraph. What it is, who it's for, why it matters.
-2. **TARGET AUDIENCE** — Who uses this and what they need.
-3. **CORE FEATURES** — Numbered list. Each with a clear 1-line description.
-4. **USER FLOW** — Step-by-step: landing → goal completion.
-5. **PAGES & COMPONENTS** — Every page, its purpose, key UI components.
-6. **DATA & STATE** — Data structures, storage needs, or API requirements.
-7. **COPY** — Every headline, CTA, body text. Zero placeholders. Real words only.
-8. **DESIGN DIRECTION** — Color mood, typography, visual style. Specific enough for a developer to follow.
+PHASE 4 — USER PERSONAS & SCENARIOS:
+Define who will use the application, their goals, challenges, and step-by-step user journey scenarios through the app.
 
 ---
 
-ABSOLUTE RULES:
-RULE 1: Build EXACTLY what was asked. No feature creep.
-RULE 2: Zero placeholder text. Write actual content.
-RULE 3: No auth/login unless explicitly requested.
-RULE 4: "lanjutkan"/"continue" — pick up EXACTLY where you left off. No recap, no re-introduction.
-RULE 5: Output files with filename comments:
+IMPORTANT RULES:
+1. Progress in order: Use Case -> PRD -> Page Structure -> Personas.
+2. If your output gets cut off due to length limits, stop gracefully and wait for the user to say "continue". When they do, pick up EXACTLY where you left off.
+3. Act as a professional web developer: ensure all concepts translate into structurally sound, modern website definitions.
+4. "lanjutkan"/"continue" — pick up EXACTLY where you left off. No recap, no re-introduction.
+5. Create realistic content and zero placeholders.
+6. Output files with filename comments if you need to provide markdown files:
 \`\`\`markdown
 // filename: README.md
 [content]
@@ -144,14 +135,7 @@ export const WS_BASE = (window.location.protocol === 'https:' ? 'wss://' : 'ws:/
 
 // ── API Key Hashing ────────────────────────────────────────
 export function hashApiKey(key) {
-  if (!key) return 'no-key';
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) {
-    const char = key.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return `key_${Math.abs(hash).toString(36)}`;
+  return 'default_user';
 }
 
 // ── Storage ────────────────────────────────────────────────
@@ -220,9 +204,9 @@ export function deleteGlobalChat(id) {
 }
 
 // ── Project CRUD ───────────────────────────────────────────
-export function createProject(apiKey, name, description = '', techStack = [], projectType = 'react') {
+export function createProject(name, description = '', techStack = [], projectType = 'react') {
   const data = loadData();
-  const keyHash = hashApiKey(apiKey);
+  const keyHash = hashApiKey();
   if (!data.projectsByKey[keyHash]) data.projectsByKey[keyHash] = [];
 
   const project = {
@@ -246,8 +230,8 @@ export function createProject(apiKey, name, description = '', techStack = [], pr
   return project;
 }
 
-export function getProjects(apiKey) {
-  return loadData().projectsByKey[hashApiKey(apiKey)] || [];
+export function getProjects() {
+  return loadData().projectsByKey[hashApiKey()] || [];
 }
 
 export function getAllProjects() {
@@ -380,6 +364,7 @@ REQUIRED STRUCTURE:
   src/utils/          ← Helpers
 RULES:
 • NO Next.js, Vue, or SSR. • NO React.lazy() on root route.
+• CRITICAL: index.html must use EXACTLY <script type="module" src="/src/main.jsx"></script>. Do NOT reference main.tsx!
 • All localStorage wrapped in try/catch. • CSS vars for full color system.
 • If backend needed: Express + better-sqlite3 in server/ directory.`
   },
@@ -501,7 +486,7 @@ export function buildContextMessages(project, targetRole) {
 }
 
 // ── AI Call ────────────────────────────────────────────────
-export async function callAI(apiKey, modelId, systemPrompt, contextMessages, userMessage, onChunk, signal) {
+export async function callAI(modelId, systemPrompt, contextMessages, userMessage, onChunk, signal) {
   const payload = {
     model: modelId,
     messages: [
@@ -517,7 +502,7 @@ export async function callAI(apiKey, modelId, systemPrompt, contextMessages, use
   const response = await fetch(`${PROXY_BASE}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ apiKey, payload }),
+    body: JSON.stringify({ payload }),
     signal
   });
 

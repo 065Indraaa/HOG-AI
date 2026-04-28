@@ -8,6 +8,7 @@ import SettingsModal from './components/SettingsModal';
 import NewProjectModal from './components/NewProjectModal';
 import GlobalChat from './components/GlobalChat';
 import LandingPage from './components/LandingPage';
+import ConsentModal from './components/ConsentModal';
 import './styles/globals.css';
 import './styles/app.css';
 
@@ -23,7 +24,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const [showConsent, setShowConsent] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
   const [panelWidths, setPanelWidths] = useState({ chat: 42, preview: 58 }); // percentages
   const [isDragging, setIsDragging] = useState(false);
@@ -32,27 +33,26 @@ export default function App() {
   // ── Load initial data ──────────────────────────────────
   useEffect(() => {
     const settings = getSettings();
-    const key = settings.apiKey || '';
-    setApiKey(key);
+    if (!settings.consentGiven) {
+      setShowConsent(true);
+    }
 
-    const ps = getProjects(key);
+    const ps = getProjects();
     setProjects(ps);
 
     const chats = getGlobalChats();
     setGlobalChats(chats);
-    if (chats.length === 0) {
+    if (chats.length === 0 && settings.consentGiven) {
       const newChat = createGlobalChat();
       setGlobalChats([newChat]);
       setActiveGlobalChatId(newChat.id);
-    } else {
+    } else if (chats.length > 0) {
       setActiveGlobalChatId(chats[0].id);
     }
 
     if (ps.length > 0) {
       setActiveProjectId(ps[0].id);
     }
-
-    if (!key) setShowSettings(true);
   }, []);
 
   // ── Refresh active project ──────────────────────────────
@@ -66,12 +66,12 @@ export default function App() {
   }, [activeProjectId, refreshTick]);
 
   const refresh = useCallback(() => {
-    const ps = getProjects(apiKey);
+    const ps = getProjects();
     setProjects(ps);
     const chats = getGlobalChats();
     setGlobalChats(chats);
     setRefreshTick(t => t + 1);
-  }, [apiKey]);
+  }, []);
 
   const handleSelectProject = useCallback((id) => {
     setActiveProjectId(id);
@@ -80,29 +80,20 @@ export default function App() {
   }, []);
 
   const handleCreateProject = useCallback((name, desc, stack, type) => {
-    const p = createProject(apiKey, name, desc, stack, type);
-    const ps = getProjects(apiKey);
+    const p = createProject(name, desc, stack, type);
+    const ps = getProjects();
     setProjects(ps);
     setActiveProjectId(p.id);
     setActiveProject(p);
     setActiveRole('concept');
     setViewMode('project');
     setShowNewProject(false);
-  }, [apiKey]);
-
-  const handleSettingsSave = useCallback((newKey) => {
-    setApiKey(newKey);
-    setShowSettings(false);
-    // Load projects for this API key
-    const ps = getProjects(newKey);
-    setProjects(ps);
-    if (ps.length > 0) {
-      setActiveProjectId(ps[0].id);
-    } else {
-      setActiveProjectId(null);
-      setActiveProject(null);
-    }
   }, []);
+
+  const handleSettingsSave = useCallback(() => {
+    setShowSettings(false);
+    refresh();
+  }, [refresh]);
 
   const handleFilesGenerated = useCallback((newFiles) => {
     // Refresh so PreviewPanel sees new files
@@ -161,7 +152,7 @@ export default function App() {
         onSettings={() => setShowSettings(true)}
         onToggleSidebar={() => setSidebarOpen(o => !o)}
         sidebarOpen={sidebarOpen}
-        apiKeySet={!!apiKey}
+        apiKeySet={true}
         onDeleteProject={() => {
           if (confirm('Delete this project and all its data from local storage AND disk?')) {
             deleteProject(activeProject.id);
@@ -189,7 +180,7 @@ export default function App() {
         <main className="main-content">
           {viewMode === 'global-chat' ? (
             <div style={{ height: '100%', width: '100%', display: 'flex', background: 'var(--bg-deep)' }}>
-              <GlobalChat apiKey={apiKey} onNeedApiKey={() => setShowSettings(true)} activeGlobalChatId={activeGlobalChatId} onRefreshChats={refresh} />
+              <GlobalChat onNeedApiKey={() => setShowSettings(true)} activeGlobalChatId={activeGlobalChatId} onRefreshChats={refresh} />
             </div>
           ) : activeProject ? (
             <div className={`panels-container ${isDragging ? 'dragging' : ''} ${mobileShowPreview ? 'mobile-show-preview' : ''}`}>
@@ -208,7 +199,6 @@ export default function App() {
                   project={activeProject}
                   activeRole={activeRole}
                   onRoleChange={setActiveRole}
-                  apiKey={apiKey}
                   onMessageSent={refresh}
                   onNeedApiKey={() => setShowSettings(true)}
                   onFilesGenerated={handleFilesGenerated}
@@ -235,9 +225,8 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <EmptyState
+              <EmptyState
               onNewProject={() => setShowNewProject(true)}
-              hasApiKey={!!apiKey}
               onSettings={() => setShowSettings(true)}
             />
           )}
@@ -259,12 +248,21 @@ export default function App() {
           onClose={() => setShowNewProject(false)}
         />
       )}
+
+      {showConsent && (
+        <ConsentModal
+          onAccept={() => {
+            setShowConsent(false);
+            refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
 
 // ── Empty State ────────────────────────────────────────────
-function EmptyState({ onNewProject, hasApiKey, onSettings }) {
+function EmptyState({ onNewProject, onSettings }) {
   return (
     <div className="empty-state">
       <div className="empty-state-inner">
@@ -303,16 +301,11 @@ function EmptyState({ onNewProject, hasApiKey, onSettings }) {
             <span>Integrated terminal</span>
           </div>
           <div className="empty-feature">
-            <span className="empty-feature-icon">🔑</span>
-            <span>Projects saved per API key</span>
+            <span className="empty-feature-icon">🔒</span>
+            <span>Local auto-save</span>
           </div>
         </div>
 
-        {!hasApiKey && (
-          <button className="btn btn-ghost empty-api-btn" onClick={onSettings}>
-            ⚙ Set NVIDIA API Key to get started
-          </button>
-        )}
         <button className="btn btn-primary" onClick={onNewProject}>
           + Create New Project
         </button>

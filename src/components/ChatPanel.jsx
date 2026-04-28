@@ -97,8 +97,8 @@ function IncompleteBanner({ onContinue }) {
     <div className="incomplete-banner">
       <span className="incomplete-icon">⚠️</span>
       <div className="incomplete-text">
-        <strong>Files Incomplete</strong>
-        <p>The builder stopped before finishing all files.</p>
+        <strong>Response Cut Off?</strong>
+        <p>If the AI stopped before finishing, click continue.</p>
       </div>
       <button className="btn btn-primary btn-sm" onClick={onContinue}>
         ▶ Continue Generation
@@ -181,24 +181,19 @@ export default function ChatPanel({
           const lastLines = allLines.slice(-20).join('\n');
           const totalLineCount = allLines.length;
           
+          const isConcept = targetRole === 'concept';
           const filenameMatches = [...fullContent.matchAll(/\/\/\s*filename:\s*(.+?)(?:\s*\(continuation\))?\s*$/gmi)];
           const lastFilename = filenameMatches.length > 0 ? filenameMatches[filenameMatches.length - 1][1].trim() : null;
 
-          prompt = `[CRITICAL — CONTINUE / LANJUTKAN INSTRUCTION]
-You got cut off. DO NOT restart any file. Pick up from EXACT character where you left off.
-Start NEW block with exactly: // filename: ${lastFilename || 'path/to/file'} (continuation)
-
-Your previous response ended with:
-------
-${lastLines}
-------
-Continue IMMEDIATELY from that exact point. Just the next line of code.`;
+          prompt = isConcept 
+            ? `[CRITICAL — CONTINUE / LANJUTKAN INSTRUCTION]\nYou got cut off in the middle of your concept. Pick up from EXACT character where you left off.\n\nYour previous response ended with:\n------\n${lastLines}\n------\nContinue IMMEDIATELY from that exact point.`
+            : `[CRITICAL — CONTINUE / LANJUTKAN INSTRUCTION]\nYou got cut off. DO NOT restart any file. Pick up from EXACT character where you left off.\nStart NEW block with exactly: // filename: ${lastFilename || 'path/to/file'} (continuation)\n\nYour previous response ended with:\n------\n${lastLines}\n------\nContinue IMMEDIATELY from that exact point. Just the next line of code.`;
         }
       }
 
       const roleConfig = ROLES[targetRole];
       const fullText = await callAI(
-        apiKey, roleConfig.model, roleConfig.systemPrompt, trimmedContext, prompt,
+        roleConfig.model, roleConfig.systemPrompt, trimmedContext, prompt,
         (partial) => {
           setStreamingText(prev => ({ ...prev, [targetRole]: partial }));
           const newFiles = parseCompletedBlocksFromStream(partial, streamParsedPaths.current[targetRole]);
@@ -317,12 +312,16 @@ Continue IMMEDIATELY from that exact point. Just the next line of code.`;
                                  (project?.roles?.builder?.messages?.length || 0) === 0 &&
                                  !isLoading[activeRole];
 
-  // Check for incomplete blocks (unclosed backticks)
+  // Check for incomplete blocks (unclosed backticks or missing terminal punctuation)
   const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+  const backticksCount = lastMessage ? (lastMessage.content.match(/```/g) || []).length : 0;
+  const hasUnclosedBackticks = backticksCount % 2 !== 0;
+  // If it doesn't end in a typical terminal char: dot, question, exclamation, quote, closing bracket, or newly added Markdown things (like list item but missing newline)
+  const lacksTerminalChar = lastMessage && lastMessage.content.trim().length > 0 && !/[.!?}\]>"'`*_~]$/.test(lastMessage.content.trim());
   const isIncomplete = lastMessage && 
                        lastMessage.role === 'assistant' && 
-                       (lastMessage.content.match(/```/g) || []).length % 2 !== 0 &&
-                       !isLoading[activeRole];
+                       !isLoading[activeRole] &&
+                       (hasUnclosedBackticks || lacksTerminalChar);
 
   return (
     <div className="chat-panel">
@@ -584,11 +583,13 @@ function PromptInput({ role, isLoading, onSend, onStop, hasConceptContext, proje
     concept: [
       'Build a modern landing page for an AI agent',
       'Spec a productivity dashboard for remote teams',
-      'Plan a mobile-first e-commerce app'
+      'Plan a mobile-first e-commerce app',
+      'Continue / Lanjutkan'
     ],
     builder: [
       'Concept approved. Build the application with Dark Cyberpunk theme.',
-      'Concept approved. Build the application with Clean Minimal theme.'
+      'Concept approved. Build the application with Clean Minimal theme.',
+      'Continue / Lanjutkan'
     ]
   };
 

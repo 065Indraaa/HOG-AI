@@ -77,7 +77,6 @@ export default function GlobalChat({ apiKey, onNeedApiKey, activeGlobalChatId, o
       const context = loadingMessages.map(m => ({ role: m.role, content: m.content })).slice(-20);
       
       const fullText = await callAI(
-        apiKey,
         selectedModel,
         GLOBAL_PROMPT,
         context,
