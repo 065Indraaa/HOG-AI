@@ -235,7 +235,6 @@ export default function App() {
 
       {showSettings && (
         <SettingsModal
-          currentKey={apiKey}
           onSave={handleSettingsSave}
           onClose={() => setShowSettings(false)}
           onClearData={refresh}

@@ -109,7 +109,7 @@ function IncompleteBanner({ onContinue }) {
 
 // ── Main ChatPanel ─────────────────────────────────────────
 export default function ChatPanel({
-  project, activeRole, onRoleChange, apiKey,
+  project, activeRole, onRoleChange,
   onMessageSent, onNeedApiKey, onFilesGenerated
 }) {
   const [messages, setMessages] = useState([]);
@@ -143,7 +143,6 @@ export default function ChatPanel({
   }, [messages, streamingText.concept, streamingText.builder]);
 
   const sendMessage = useCallback(async (userText, targetRole = activeRole, isRetry = false, retryNum = 0) => {
-    if (!apiKey) { onNeedApiKey(); return; }
     if (!userText.trim()) return;
 
     setError(null);
@@ -273,7 +272,7 @@ export default function ChatPanel({
     } finally {
       setIsLoading(prev => ({ ...prev, [targetRole]: false }));
     }
-  }, [apiKey, project.id, activeRole, onMessageSent, onNeedApiKey]);
+  }, [project.id, activeRole, onMessageSent]);
 
   const handleStop = () => {
     abortRefs.current[activeRole]?.abort();
@@ -627,7 +626,7 @@ function PromptInput({ role, isLoading, onSend, onStop, hasConceptContext, proje
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             rows={1}
-            disabled={isLoading[activeRole]}
+            disabled={isLoading}
           />
           {isLanjutkan && (
             <div className="lanjutkan-hint" style={{ color: role.color }}>
@@ -637,7 +636,7 @@ function PromptInput({ role, isLoading, onSend, onStop, hasConceptContext, proje
           <span className="prompt-hint">⌘↵</span>
         </div>
 
-        {isLoading[activeRole] ? (
+        {isLoading ? (
           <button className="send-btn send-btn-stop" onClick={onStop} title="Stop generation">
             <span className="stop-icon">⬛</span>
           </button>

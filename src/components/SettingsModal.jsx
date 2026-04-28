@@ -80,12 +80,18 @@ export default function SettingsModal({ onSave, onClose, onClearData }) {
         <div className="settings-section">
           <div className="settings-section-title">Data Management</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {apiKey && projectsForKey.length > 0 && (
+            {projects.length > 0 && (
               <button className="btn btn-ghost btn-sm" onClick={handleClearCurrentKey}>
-                🗑 Clear Current Key's Projects ({projectsForKey.length})
+                🗑 Clear All Projects ({projects.length})
               </button>
             )}
-            <button className="btn btn-danger btn-sm" onClick={handleClearAll}>
+            <button className="btn btn-danger btn-sm" onClick={() => {
+              if (confirm('Delete ALL data including projects and settings?')) {
+                localStorage.clear();
+                onClearData();
+                onClose();
+              }
+            }}>
               ⚠ Delete All Data
             </button>
           </div>
